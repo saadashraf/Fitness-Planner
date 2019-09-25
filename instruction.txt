@@ -1,0 +1,6 @@
+run the driver.py file  only
+for age less than 50 will ask for weight and height
+for more than 50 none will be asked 
+do give sensible input to get output otherwise it might get stuck 
+
+do not modify other file unless necessary
