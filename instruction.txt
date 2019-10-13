@@ -1,3 +1,4 @@
+install pymzn(pip install pymzn)
 run the driver.py file  only
 for age less than 50 will ask for weight and height
 for more than 50 none will be asked 

@@ -1,51 +1,68 @@
-enum exercise = {A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, cooldown};
-array[exercise, feature] of int: info = [|A1, 5, light|A2, 10, light|A3, 8, light|A4, 15, heavy|A5, 6, light|A6, 20, heavy|A7, 10, light|A8, 5, light|A9, 21, heavy|A10, 9, light|cooldown, 0, light|];
+enum exercise = {Walking, ClimbingStairs, Pushups, BoxJump, Planks, Skipping, Squats, Situps, MountainClimber, JumpingJacks, cooldown};
+array[exercise, feature] of int: info = [|Walking, 5, light|ClimbingStairs, 10, light|Pushups, 8, light|BoxJump, 15, heavy|Planks, 6, light|Skipping, 20, heavy|Squats, 10, light|Situps, 5, light|MountainClimber, 21, heavy|JumpingJacks, 9, light|cooldown, 0, light|];
 int: slot = 5;
-int: min_calorie = 308;
+int: min_calorie = 495;
 enum feature = {name, calorie, types};
 enum e_type = {light, heavy};
 int: max_calorie = min_calorie + 50;
 int: min_time ;
 int: max_time = 20;
-%int: min_duration = 60;
-%int: max_duration = min_duration + 10;
+
 array[1..7,1..slot] of var exercise: roster;
 array[1..7,1..slot] of var int: time;
-%array[1..7,1..slot] of var e_type: box;
-%array[1..slot] of var int: time;
-%constraint forall(i in 1..7,j in 1..slot)(box[i,j] = info[roster[i,j],types]);
+
+% ensures that the last exercise is cooldown
 constraint forall(i in 1..7) (info[roster[i,1],types] = light /\ roster[i,slot] = cooldown);
+
+%ensure only one heavy exercise is present between two consecutive days
 constraint forall(i in 1..7-1,j in 1..slot)(info[roster[i,j],types] = heavy -> forall(l in 1..slot)(info[roster[i+1,l],types] != heavy));
+
+% ensures every exercise is present atleast once
 constraint forall(i in exercise) (sum(j in 1..7,k in 1..slot)(roster[j,k] = i) >= 1);
+
+%ensures heavy evercise are present on aternating days
 constraint exists(m in exercise)(info[m,types] = heavy) -> sum(i in 1..7, j in 1..slot)(info[roster[i,j],types] = heavy) == 4;
+
+%introduce randomization so that person does not do same type at the same time
 constraint forall(i in 1..7,j in 1..slot-1)(info[roster[i,j],types] = heavy ->forall(k in j+1..slot-1)(info[roster[i,k],types] != heavy));
+
+%ensures exercise are not the same horizontally
 constraint forall(i in 1..7,j in 1..slot-1)(forall(k in j+1..slot-1)(roster[i,j] !=roster[i,k]));
+
+%ensures exercise are not the same vertically
 constraint forall(i in 1..7-1,j in 1..slot-2)(roster[i,j] !=roster[i+1,j]);
-%constraint forall(i in 1..7,j in 1..slot-1)(roster[i,j] !=roster[i,j+1]);
+
+% ensures all the other exercise except the last one is not cooldown
 constraint forall(i in 1..7,j in 1..slot-1) (roster[i,j] != cooldown);
 
+%ensure that all the exercises are allotted some time
 constraint forall(i in 1..7,j in 1..slot) (time[i,j] > 0);
-%constraint sum(i in 1..slot) (time[i]) >= min_duration;
-%constraint sum(i in 1..slot) (time[i]) <= max_duration;
+
+
+
+% checks the calorie burn is within range
 constraint forall(i in 1..7)(sum(j in 1..slot)(info[roster[i,j],calorie] * time[i,j])>= min_calorie) ;
 constraint forall(i in 1..7)(sum(j in 1..slot)(info[roster[i,j],calorie] * time[i,j])<= max_calorie) ;
+
+% checks the total time spent is within the range
 constraint forall(i in 1..7,j in 1..slot) (time[i,j] >= min_time);
 constraint forall(i in 1..7,j in 1..slot) (time[i,j] <= max_time);
+
+%ensure that time are not alloted equally
 constraint forall(i in 1..7,j in 1..slot-1)(forall(k in j+1..slot)(time[i,j] !=time[i,k]));
 constraint forall(i in 1..7-1,j in 1..slot-1)(time[i,j] != time[i+1,j]);
 
+% set cooldowndown time to 10 min
 constraint forall(i in 1..7) (time[i,slot] = 10);
-%constraint forall(i in ) ()
-%constraint forall(i in 1..length(exercise))(exists(j in 1..days,k in 1..slot)(roster[j,k] = exercise[i]));
-%output["\(roster)\n"]%++["\(to_enum(e_type,info[roster[i],types])) "|i in 1..slot];
+ 
+ 
+ 
 
-%constraint forall(i in exercise)(count(roster,i)>=1);
+
+%solve minimize sum(i in 1..7,j in 1..slot) (time[i,j]);
 solve satisfy;
-%output["\(roster[i,j]) \(time[i,j])"|i in 1..7,j in 1..slot];
+
 output[if k = 1 then "\n" else " " endif ++
       "\(roster[i,k]) \(time[i,k])"
-   | i in 1..7, k in 1..slot]; %++[if k = 1 then "\n" else " " endif ++
-  %     show(box[i,k])
-  %  | i in 1..7, k in 1..slot]++["\n"] ++ [if k = 1 then "\n" else " " endif ++
-  %     show(time[i,k])
-  %  | i in 1..7, k in 1..slot] ;
+   | i in 1..7, k in 1..slot]; 
+ 
